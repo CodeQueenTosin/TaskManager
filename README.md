@@ -28,19 +28,13 @@ o	Uses MockAPI.io for remote persistence via HttpClient.
 
 
 ________________________________________
+
 2. Clean Architecture Layers
 Layer	Responsibilities
 Domain	Contains core business logic: TaskItem entity, computed properties, and validation using FluentValidation.
 Application	Defines business contracts (ITaskService) and implements orchestration logic (TaskService).
 Infrastructure	Implements data persistence logic using HttpClient to communicate with MockAPI (TaskRepository).
 Presentation	Handles incoming HTTP requests and responses using ASP.NET Core Web API. Includes input validation, Swagger UI, and error handling middleware.
-
-________________________________________
--	Architectural Diagram
- 
-
-
-
 
 
 3. Project Structure
