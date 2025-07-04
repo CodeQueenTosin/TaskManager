@@ -1,115 +1,95 @@
-📌 TaskManager Project Documentation
-________________________________________
-1. Overview
-TaskManager is a modular and extensible Task List Manager Web Service built using C# and .NET 6, following the Clean Architecture pattern. It exposes a RESTful API to perform full CRUD operations on task items and compute task-related metrics automatically.
-The system interacts with a remote data source via MockAPI.io, simulating persistence with real HTTP communication.
+# 📌 TaskManager Project Documentation
 
-🔑 Core Features
-•	Task Properties:
-o	TaskId (string): Unique identifier (auto-generated or supplied)
-o	TaskName (string): Concise title of the task
-o	TaskDescription (string): Detailed description
-o	StartDate (DateTime): When the task starts
-o	AllottedTime (int in days): Planned duration
-o	ElapsedTime (int in days): Actual time spent
-o	TaskStatus (bool): false = Pending, true = Closed
-o	Computed Fields (calculated dynamically):
-	EndDate = StartDate + ElapsedTime
-	DueDate = StartDate + AllottedTime
-	DaysOverdue = max(ElapsedTime - AllottedTime, 0) (if Pending)
-	DaysLate = max(AllottedTime - ElapsedTime, 0) (if Closed)
+## 1. Overview
 
-•	REST API Endpoints:
-o	POST /api/tasks – Create a new task
-o	GET /api/tasks – Retrieve all tasks (with computed metrics)
-o	GET /api/tasks/{id} – Retrieve a task by ID (with computed metrics)
-o	DELETE /api/tasks/{id} – Delete a task by ID
-•	External Data Source:
-o	Uses MockAPI.io for remote persistence via HttpClient.
+**TaskManager** is a clean, modular task management API built with **C# and .NET 6**, following **Clean Architecture**. It supports full **CRUD operations** and calculates key task metrics using a remote data source ([MockAPI.io](https://mockapi.io)).
+
+### 🔑 Features
+
+- **Task Fields**:
+  - `TaskId`, `TaskName`, `TaskDescription`
+  - `StartDate`, `AllottedTime`, `ElapsedTime`, `TaskStatus`
+  - **Computed**: `EndDate`, `DueDate`, `DaysOverdue`, `DaysLate`
+
+- **API Endpoints**:
+  - `POST /api/tasks` – Create Task
+  - `GET /api/tasks` – List Tasks
+  - `GET /api/tasks/{id}` – Get Task by ID
+  - `DELETE /api/tasks/{id}` – Delete Task
+
+- **Data Source**: Uses `HttpClient` to interact with MockAPI.io.
+
+---
+
+## 2. Architecture
+
+| Layer          | Responsibility                                                                  |
+|----------------|-------------------------------------------------------------------------------- |
+| **Domain**     | Core logic (`TaskItem`, computed properties, FluentValidation)                  |
+| **Application**| Business contracts and services (`ITaskService`, `TaskService`)                 |
+| **Infrastructure** | HTTP-based persistence (`TaskRepository`)                                   |
+| **Presentation**| Web API endpoints, validation, Swagger, global error handling                  |
+
+---
+
+## 3. Project Structure
+<root>/
+├── TaskManager.Api/ # Presentation
+├── TaskManager.Application/ # Application
+├── TaskManager.Domain/ # Domain
+├── TaskManager.Infrastructure/ # Infrastructure
 
 
-________________________________________
+## 4. CRUD Flow
 
-2. Clean Architecture Layers
-Layer	Responsibilities
-Domain	Contains core business logic: TaskItem entity, computed properties, and validation using FluentValidation.
-Application	Defines business contracts (ITaskService) and implements orchestration logic (TaskService).
-Infrastructure	Implements data persistence logic using HttpClient to communicate with MockAPI (TaskRepository).
-Presentation	Handles incoming HTTP requests and responses using ASP.NET Core Web API. Includes input validation, Swagger UI, and error handling middleware.
+- **POST**: Validate input → Call Service → Save via Repository → Return created Task with computed fields.
+- **GET**: Fetch from MockAPI → Compute metrics → Return enriched list or single item.
+- **DELETE**: Remove from MockAPI → Return success or not found.
 
+---
 
-3. Project Structure
-<root-folder>/
-├── TaskManager.Api/             # Presentation Layer
-│   ├── Controllers/
-│   ├── Middleware/
-│   └── Program.cs
-│
-├── TaskManager.Application/     # Application Layer
-│   ├── Interfaces/ITaskService.cs
-│   └── Services/TaskService.cs
-│
-├── TaskManager.Domain/          # Domain Layer
-│   ├── Entities/TaskItem.cs
-│   └── Validators/TaskItemValidator.cs
-│
-├── TaskManager.Infrastructure/  # Infrastructure Layer
-│   └── Repository/TaskRepository.cs
+## 5. Computed Properties
 
-________________________________________
-4. Data Flow – CRUD Operations
-🔸 POST /api/tasks
-1.	Controller receives request payload
-2.	Validates using TaskItemValidator
-3.	Calls TaskService.AddTaskAsync()
-4.	Delegates to repository → POST to MockAPI
-5.	Task created with computed fields → returned as 201 Created
-🔸 GET /api/tasks
-1.	Controller calls TaskService.GetAllTasksAsync()
-2.	Repository fetches tasks from MockAPI
-3.	Domain layer computes metrics (e.g., DueDate, DaysOverdue)
-4.	Controller returns enriched task list
-🔸 GET /api/tasks/{id}
-1.	Controller calls TaskService.GetTaskByIdAsync(id)
-2.	Task retrieved and returned with computed values
-🔸 DELETE /api/tasks/{id}
-1.	Controller calls TaskService.DeleteTaskAsync(id)
-2.	Repository issues DELETE request to MockAPI
-3.	Returns 204 No Content on success or 404 Not Found if not found
-________________________________________
-5. Computed Properties in Domain
+```csharp
 public DateTime EndDate => StartDate.AddDays(ElapsedTime);
 public DateTime DueDate => StartDate.AddDays(AllottedTime);
 public int DaysOverdue => !TaskStatus ? Math.Max(ElapsedTime - AllottedTime, 0) : 0;
 public int DaysLate => TaskStatus ? Math.Max(AllottedTime - ElapsedTime, 0) : 0;
-________________________________________
-6. Input Validation
-Implemented using FluentValidation in TaskItemValidator.cs.
-Rules include:
-•	Required fields (TaskName, StartDate)
-•	Positive integers for AllottedTime and ElapsedTime
-•	Start date must not be in the past (optional rule)
-•	Elapsed time should not exceed allotted time if the task is still pending (optional rule)
-________________________________________
+
+
+6. Validation Rules
+
+Via FluentValidation:
+
+Required: TaskName, StartDate
+
+AllottedTime, ElapsedTime must be ≥ 0
+
+Optional: Prevent overdue on pending tasks, disallow past start dates
+
 7. Getting Started
 🔧 Prerequisites
-•	.NET 6 SDK
-•	Visual Studio (recommended)
-📥 Setup Instructions
-•	git clone https://github.com/CodeQueenTosin/TaskManager.git
-•	dotnet restore
-•	dotnet build
+.NET 6 SDK
 
-▶️ Run the API
-•	dotnet run
-•	Access the Swagger UI at:
-📍 https://localhost:7216/swagger/index.html
+Visual Studio 
 
-________________________________________
-Conclusion
-This documentation outlines the design and implementation of the TaskManager Web Service, a modular and testable task management API built with C# and .NET 6 using Clean Architecture.
-✅ Testable & Decoupled: Core logic resides in the Domain layer.
-✅ Maintainable: Easy to swap out the data source (e.g., from MockAPI to SQL Server).
-✅ Scalable Architecture: Clean Architecture facilitates long-term growth and team collaboration.
-✅ Clear Responsibility Separation: Each layer has a single focus and minimal coupling.
+⚙️ Setup & Run
+git clone https://github.com/CodeQueenTosin/TaskManager.git
+cd TaskManager
+dotnet restore
+dotnet build
+dotnet run
+🔗 Access Swagger UI:
+https://localhost:7216/swagger/index.html
+
+✅ Conclusion
+TaskManager is a clean, testable, and maintainable API built with a focus on:
+
+✔️ Testability – Logic isolated in Domain Layer
+
+✔️ Maintainability – Easy to swap MockAPI with real DB
+
+✔️ Scalability – Clean Architecture enables long-term growth
+
+✔️ Clarity – Each layer has a well-defined responsibility
 
