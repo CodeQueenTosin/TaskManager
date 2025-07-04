@@ -3,6 +3,7 @@ ________________________________________
 1. Overview
 TaskManager is a modular and extensible Task List Manager Web Service built using C# and .NET 6, following the Clean Architecture pattern. It exposes a RESTful API to perform full CRUD operations on task items and compute task-related metrics automatically.
 The system interacts with a remote data source via MockAPI.io, simulating persistence with real HTTP communication.
+
 🔑 Core Features
 •	Task Properties:
 o	TaskId (string): Unique identifier (auto-generated or supplied)
@@ -17,6 +18,7 @@ o	Computed Fields (calculated dynamically):
 	DueDate = StartDate + AllottedTime
 	DaysOverdue = max(ElapsedTime - AllottedTime, 0) (if Pending)
 	DaysLate = max(AllottedTime - ElapsedTime, 0) (if Closed)
+
 •	REST API Endpoints:
 o	POST /api/tasks – Create a new task
 o	GET /api/tasks – Retrieve all tasks (with computed metrics)
@@ -24,7 +26,6 @@ o	GET /api/tasks/{id} – Retrieve a task by ID (with computed metrics)
 o	DELETE /api/tasks/{id} – Delete a task by ID
 •	External Data Source:
 o	Uses MockAPI.io for remote persistence via HttpClient.
-
 
 
 ________________________________________
